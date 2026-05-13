@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Lifestyle AI Assistant</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.95;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            flex-wrap: wrap;
+            background: #f9f9f9;
+        }
+
+        .tab-btn {
+            padding: 10px 20px;
+            border: 2px solid transparent;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tab-btn:hover {
+            background: #f0f0f0;
+        }
+
+        .tab-btn.active {
+            border-color: #667eea;
+            color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .tab-btn i {
+            font-size: 16px;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        input, textarea {
+            padding: 12px 16px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn-submit {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .btn-submit:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .response-box {
+            background: #f0f4ff;
+            border: 1px solid #667eea;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .response-box h3 {
+            color: #667eea;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .response-box p {
+            color: #333;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #667eea;
+            font-weight: 500;
+        }
+
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 3px solid #667eea;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .error-msg {
+            background: #ffe0e0;
+            color: #c00;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-top: 12px;
+            font-size: 14px;
+        }
+
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 24px;
+            }
+            .content {
+                padding: 20px;
+            }
+            .tabs {
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        function LifestyleAI() {
+            const [activeTab, setActiveTab] = useState('fitness');
+            const [loading, setLoading] = useState(false);
+            const [response, setResponse] = useState('');
+            const [error, setError] = useState('');
+
+            const [inputs, setInputs] = useState({
+                fitness: { goal: '', currentLevel: '', availableTime: '' },
+                health: { concern: '', symptoms: '', habits: '' },
+                meals: { dietType: '', allergies: '', mealCount: '' },
+                finance: { income: '', expenses: '', goal: '' }
+            });
+
+            const tabs = [
+                { id: 'fitness', label: 'Fitness', icon: 'fas fa-dumbbell' },
+                { id: 'health', label: 'Health', icon: 'fas fa-heart' },
+                { id: 'meals', label: 'Meal Prep', icon: 'fas fa-utensils' },
+                { id: 'finance', label: 'Finance', icon: 'fas fa-coins' }
+            ];
+
+            const handleInputChange = (e) => {
+                const { name, value } = e.target;
+                setInputs(prev => ({
+                    ...prev,
+                    [activeTab]: { ...prev[activeTab], [name]: value }
+                }));
+            };
+
+            const getPrompt = () => {
+                const data = inputs[activeTab];
+
+                const prompts = {
+                    fitness: `I want to improve my fitness. My goal is: ${data.goal}. Current fitness level: ${data.currentLevel}. Time available per week: ${data.availableTime} hours. Give me a practical, mid-level workout plan I can start immediately with specific exercises.`,
+                    health: `I have a health concern: ${data.concern}. Symptoms: ${data.symptoms}. Current habits: ${data.habits}. Give me practical, evidence-based wellness advice and recommendations.`,
+                    meals: `I need meal prep ideas. Diet type: ${data.dietType}. Allergies: ${data.allergies || 'none'}. Meals per day: ${data.mealCount}. Give me 3 practical meal ideas with simple recipes I can prepare.`,
+                    finance: `Help me with my finances. Monthly income: ${data.income}. Monthly expenses: ${data.expenses}. Financial goal: ${data.goal}. Give me actionable advice with specific steps.`
+                };
+
+                return prompts[activeTab];
+            };
+
+            const handleGetAdvice = async () => {
+                setError('');
+                const hasInput = Object.values(inputs[activeTab]).some(v => v && v.toString().trim());
+
+                if (!hasInput) {
+                    setError('⚠️ Please fill in at least one field to get personalized advice.');
+                    return;
+                }
+
+                setLoading(true);
+                setResponse('');
+
+                try {
+                    const prompt = getPrompt();
+                    const apiResponse = await fetch('https://api.anthropic.com/v1/messages', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            model: 'claude-sonnet-4-20250514',
+                            max_tokens: 1000,
+                            messages: [{ role: 'user', content: prompt }]
+                        })
+                    });
+
+                    if (!apiResponse.ok) {
+                        throw new Error('API request failed. Please check your connection and try again.');
+                    }
+
+                    const data = await apiResponse.json();
+                    const text = data.content?.[0]?.text || 'No response received';
+                    setResponse(text);
+                } catch (err) {
+                    setError('❌ Error: ' + (err.message || 'Could not fetch AI advice. Please try again.'));
+                }
+                setLoading(false);
+            };
+
+            const renderInputs = () => {
+                switch (activeTab) {
+                    case 'fitness':
+                        return (
+                            <div className="input-group">
+                                <input 
+                                    type="text" 
+                                    name="goal" 
+                                    placeholder="What's your fitness goal? (e.g., lose weight, build muscle, get stronger)" 
+                                    value={inputs.fitness.goal} 
+                                    onChange={handleInputChange} 
+                                />
+                                <input 
+                                    type="text" 
+                                    name="currentLevel" 
+                                    placeholder="Current fitness level (beginner, intermediate, advanced)" 
+                                    value={inputs.fitness.currentLevel} 
+                                    onChange={handleInputChange} 
+                                />
+                                <input 
+                                    type="text" 
+                                    name="availableTime" 
+                                    placeholder="Hours available per week for exercise" 
+                                    value={inputs.fitness.availableTime} 
+                                    onChange={handleInputChange} 
+                                />
+                            </div>
+                        );
+                    case 'health':
+                        return (
+                            <div className="input-group">
+                                <input 
+                                    type="text" 
+                                    name="concern" 
+                                    placeholder="Health concern (e.g., stress, sleep, digestion, energy)" 
+                                    value={inputs.health.concern} 
+                                    onChange={handleInputChange} 
+                                />
+                                <input 
+                                    type="text" 
+                                    name="symptoms" 
+                                    placeholder="Any symptoms or issues you're experiencing?" 
+                                    value={inputs.health.symptoms} 
+                                    onChange={handleInputChange} 
+                                />
+                                <input 
+                                    type="text" 
+                                    name="habits" 
+                                    placeholder="Current health habits (sleep hours, exercise, diet quality)" 
+                                    value={inputs.health.habits} 
+                                    onChange={handleInputChange} 
+                                />
+                            </div>
+                        );
+                    case 'meals':
+                        return (
+                            <div className="input-group">
+                                <input 
+                                    type="text" 
+                                    name="dietType" 
+                                    placeholder="Diet preference (keto, vegan, low-carb, balanced, high-protein)" 
+                                    value={inputs.meals.dietType} 
+                                    onChange={handleInputChange} 
+                                />
+                                <input 
+                                    type="text" 
+                                    name="allergies" 
+                                    placeholder="Food allergies or restrictions (optional)" 
+                                    value={inputs.meals.allergies} 
+                                    onChange={handleInputChange} 
+                                />
+                                <input 
+                                    type="text" 
+                                    name="mealCount" 
+                                    placeholder="How many meals per day do you want to prep?" 
+                                    value={inputs.meals.mealCount} 
+                                    onChange={handleInputChange} 
+                                />
+                            </div>
+                        );
+                    case 'finance':
+                        return (
+                            <div className="input-group">
+                                <input 
+                                    type="text" 
+                                    name="income" 
+                                    placeholder="Monthly income (e.g., 50000)" 
+                                    value={inputs.finance.income} 
+                                    onChange={handleInputChange} 
+                                />
+                                <input 
+                                    type="text" 
+                                    name="expenses" 
+                                    placeholder="Approximate monthly expenses (e.g., 30000)" 
+                                    value={inputs.finance.expenses} 
+                                    onChange={handleInputChange} 
+                                />
+                                <input 
+                                    type="text" 
+                                    name="goal" 
+                                    placeholder="Financial goal (e.g., save 1 lakh, invest in stocks, pay off debt)" 
+                                    value={inputs.finance.goal} 
+                                    onChange={handleInputChange} 
+                                />
+                            </div>
+                        );
+                    default:
+                        return null;
+                }
+            };
+
+            return (
+                <div className="container">
+                    <div className="header">
+                        <h1>
+                            <i className="fas fa-sparkles"></i>
+                            Daily Lifestyle AI Assistant
+                        </h1>
+                        <p>Your personal guide for fitness, health, meals & finances 🎯</p>
+                    </div>
+
+                    <div className="tabs">
+                        {tabs.map(tab => (
+                            <button
+                                key={tab.id}
+                                className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`}
+                                onClick={() => {
+                                    setActiveTab(tab.id);
+                                    setResponse('');
+                                    setError('');
+                                }}
+                            >
+                                <i className={tab.icon}></i>
+                                {tab.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="content">
+                        {renderInputs()}
+
+                        <button
+                            className="btn-submit"
+                            onClick={handleGetAdvice}
+                            disabled={loading}
+                        >
+                            {loading ? (
+                                <span className="loading">
+                                    <span className="spinner"></span>
+                                    Getting your personalized advice...
+                                </span>
+                            ) : (
+                                '✨ Get Personalized Advice'
+                            )}
+                        </button>
+
+                        {error && <div className="error-msg">{error}</div>}
+
+                        {response && (
+                            <div className="response-box">
+                                <h3>
+                                    <i className="fas fa-lightbulb"></i>
+                                    AI Recommendations
+                                </h3>
+                                <p>{response}</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<LifestyleAI />, document.getElementById('root'));
+    </script>
+</body>
+</html>
